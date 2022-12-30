@@ -15,6 +15,19 @@ _If your application does not support auto-discovery you will need to register t
 ]
 ```
 
+## Model
+
+The model for this package includes the mandatory field `key`, the `value` field is nullable.  There are also several other optional fields included on this model to aid in creating a user interface, these fields are:
+```
+description // Nullable
+type // Default = 'text'
+validation_rules // Nullable
+options // Nullable
+group // Nullable
+```
+
+The only fields that are cached for use with the `setting()` helper are `key` & `value`.
+
 ## Helper
 
 This package includes a helper to access settings anywhere in your app using the defined key for your desired setting:
@@ -32,15 +45,16 @@ setting('app_name', 'Pattern')
 You can also directly access the class by passing no arguments through.  This is useful to access the other methods on the model, for example:
 
 ```php
-setting()->getAll()
+setting()->getAllCachedSettings()
 ```
 ## Available Methods
 
 ```php
-setting()->getAll()
-setting()->get($key)
-setting()->set($key, $value) // Returns new value
-setting()->remove($key) // Returns true / false
+setting()->getAllCachedSettings() // Returns collection of all cached settings
+setting()->settingExists($key) // Returns true / false
+setting()->getCachedValue($key) // Returns setting value
+setting()->setCachedValue($key, $value) // Returns new setting value
+setting()->remove($key) // Returns true / false  (Sets value to null & soft deletes the record)
 setting()::clearCache() // Returns true / false
 ```
 
