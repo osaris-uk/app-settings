@@ -47,6 +47,12 @@ class AppSetting extends Model
     protected $fillable = [
         'key',
         'value',
+        'description',
+        'type',
+        'validation_rules',
+        'options',
+        'group',
+        'deleted_at',
     ];
 
     /**
@@ -61,11 +67,22 @@ class AppSetting extends Model
      *
      * @return Collection
      */
-    public function getAll()
+    public function getAllCachedSettings()
     {
         return Cache::rememberForever(self::$cacheKey, function () {
             return $this->pluck('value', 'key');
         });
+    }
+
+    /**
+     * Check if a setting exists
+     *
+     * @param string $key
+     * @return bool
+     */
+    public function settingExists($key)
+    {
+        return $this->where('key', $key)->exists();
     }
 
     /**
@@ -74,9 +91,9 @@ class AppSetting extends Model
      * @param string $key
      * @return mixed
      */
-    public function get($key)
+    public function getCachedValue($key)
     {
-        return $this->getAll()->get($key);
+        return $this->getAllCachedSettings()->get($key) ?? null;
     }
 
     /**
@@ -86,14 +103,17 @@ class AppSetting extends Model
      * @param string|mixed $value
      * @return mixed
      */
-    public function set($key, $value)
+    public function setCachedValue($key, $value)
     {
-        $this->updateOrCreate(
+        $this->withTrashed()->updateOrCreate(
             ['key' => $key],
-            ['value' => $value]
+            [
+                'value' => $value,
+                'deleted_at' => null
+            ]
         );
 
-        return $this->get($key);
+        return $this->getCachedValue($key);
     }
 
     /**
@@ -105,6 +125,7 @@ class AppSetting extends Model
     public function remove($key)
     {
         if($setting = $this->where('key', $key)->first()) {
+            $setting->update(['value' => null]);
             return $setting->delete();
         }
 
